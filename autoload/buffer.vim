@@ -423,20 +423,23 @@ function! s:bf_close() abort
 	let s:close_buffer_no = bufnr('%')
 
 	" Check buffer modified
-	let s:item_shortcut_key = "scd"
+	let s:item_shortcut_key = "wcd"
 	let s:proc_shortcut_key = "l"
 	if getbufinfo(s:close_buffer_no)[0].changed
 		if s:supported_popup
 			" If changed, select the termination process
-			call popup_menu(['s : Save', 'c : Cancel', 'd : Discard'], #{
+			call popup_menu(['w : Write', 'c : Cancel', 'd : Discard'], #{
 						\ filter: 'Bf_popup_menu_filter',
 						\ callback: 's:bf_close_selected_handler',
 						\ border: [0,0,0,0],
 						\ padding: [1,5,1,5]
 						\ })
 		else
-			echohl WarningMsg | echomsg 'No changes saved.'| echohl None
-			let l:key = input("Please select operation of terminate. [s:Save, c:Cancel, d:Discard ] ? ")
+"			echohl WarningMsg | echomsg 'No changes saved.'| echohl None
+"			let l:key = input("Please select operation of terminate. [s:Save, c:Cancel, d:Discard ] ? ")
+			echohl WarningMsg | echomsg 'No changes saved. Please select operation. [w:Write, c:Cancel, d:Discard ] ? '| echohl None
+"			echo "Please select operation of terminate. [s:Save, c:Cancel, d:Discard ] ? "
+			let l:key = nr2char(getchar())
 			if !empty(l:key)
 				call s:bf_close_selected_handler(0, stridx(s:item_shortcut_key, l:key)+1)
 			endif
