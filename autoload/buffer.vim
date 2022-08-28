@@ -149,8 +149,10 @@ function! s:open_buffer(list) abort
 	normal! gg
 	normal! 0
 
-"	execute 'syntax match mark "^ \*"'
-"	highlight link mark Directory
+	syn match bufferKey '^  .[A-Z|[0-9] '
+	syn match bufferText '\*.*$'
+	hi! def link bufferKey Function
+	hi! def link bufferText Directory
 
 	setlocal nomodifiable
 endfunction
@@ -173,8 +175,13 @@ function! s:open_buffer_list() abort
 		if temp[2] != "+"
 			call insert(temp, " ", 2)
 		endif
-		let name = strpart(temp[3], strridx(temp[3], "\\")+1, strlen(temp[3]))
-		call add(list, printf("%4s %3s %s   %-16s  (%s)", temp[0], temp[1], temp[2], name, temp[3]))
+		call add(list, printf("%4s %s %3s %s   %-16s  (%s)",
+	  		\ temp[0],
+	  		\ s:current_buffer_no == temp[0] ? "*" : " ",
+			\ temp[1],
+	  		\ temp[2],
+	  		\ strpart(temp[3], strridx(temp[3], "\\")+1, strlen(temp[3])),
+	  		\ temp[3]))
 	endfor
 
 	call s:open_buffer(list)
@@ -194,9 +201,9 @@ function! s:open_mark_list() abort
 		let key = all_marks[i]
 	    let [ bnr, line ] = getpos("'".key)[0:1]
 		if line
-			let temp = printf(" %s %s  %6d    %s",
-				\ bnr == cbnr ? " " : " ",
+			let temp = printf("   %s %s %6d    %s",
 				\ key,
+				\ bnr == cbnr ? "*" : " ",
 				\ line,
 				\ s:get_mark_text(key))
 			call add(list, temp)
@@ -211,11 +218,8 @@ endfunction
 " buffer_close()
 "---------------------------------------------------
 function! s:buffer_close() abort
-	" Get current buffer number
-	let close_buffer_no = bufnr('%')
-
 	" Check buffer modified
-	if getbufinfo(close_buffer_no)[0].changed
+	if getbufinfo(s:current_buffer_no)[0].changed
 		echohl WarningMsg
 		echomsg 'No changes saved. Please select operation. [w:Write, c:Cancel, d:Discard ] ? '
 		echohl None
@@ -240,7 +244,7 @@ function! s:buffer_close() abort
 	elseif &buftype != '' && len(getwininfo()) >= 2
 		close
 	else
-		execute 'bdelete! '.close_buffer_no
+		execute 'bdelete! '.s:current_buffer_no
 		if &buftype == 'quickfix'
 			bnext
 		endif
@@ -251,6 +255,7 @@ endfunction
 " buffer#start()
 "---------------------------------------------------
 function! buffer#start(mode) abort
+	let s:current_buffer_no = bufnr('%')
 	if a:mode == "b"
 		let s:action_selected = function('s:action_selected_buffer')
 		let s:action_delete = function('s:action_delete_buffer')
