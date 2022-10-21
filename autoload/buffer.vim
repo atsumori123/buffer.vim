@@ -244,7 +244,7 @@ function! s:buffer_close() abort
 		cclose
 	elseif &buftype != ''
 		" current window is special buffer
-		close
+		bdelete
 	else
 		" list up buffers exclude special buffer
 		let bufs = filter(range(1, bufnr('$')), '
