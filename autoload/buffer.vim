@@ -10,7 +10,7 @@ function! s:get_mark_text(key) abort
 		return ""
 	endif
 	let text = split(temp[1])
-	
+
 	" get text only (remove key, line, culum)
 	call remove(text, 0, 2)
 
@@ -177,7 +177,7 @@ function! s:open_buffer_list() abort
 		endif
 		call add(list, printf("%4s %s %3s %s   %-16s  (%s)",
 	  		\ temp[0],
-	  		\ s:current_buffer_no == temp[0] ? "*" : " ",
+	  		\ s:current_bufno == temp[0] ? "*" : " ",
 			\ temp[1],
 	  		\ temp[2],
 	  		\ strpart(temp[3], strridx(temp[3], "\\")+1, strlen(temp[3])),
@@ -219,7 +219,7 @@ endfunction
 "---------------------------------------------------
 function! s:buffer_close() abort
 	" Check buffer modified
-	if getbufinfo(s:current_buffer_no)[0].changed
+	if getbufinfo(s:current_bufno)[0].changed
 		echohl WarningMsg
 		echomsg 'No changes saved. Please select operation. [w:Write, c:Cancel, d:Discard ] ? '
 		echohl None
@@ -227,7 +227,7 @@ function! s:buffer_close() abort
 		if key == 'w'
 			let filename = ''
 			if bufname("%") == ""
-				let filename = input('input filename ? ', getcwd().'\', 'file') 
+				let filename = input('input filename ? ', getcwd().'\', 'file')
 				if empty(filename) | return | endif
 			endif
 			silent! execute 'write '.filename
@@ -240,14 +240,26 @@ function! s:buffer_close() abort
 
 	" close buffer
 	if &buftype == 'quickfix'
+		" current window is QuickFix
 		cclose
-	elseif &buftype != '' && len(getwininfo()) >= 2
+	elseif &buftype != ''
+		" current window is special buffer
 		close
 	else
-		execute 'bdelete! '.s:current_buffer_no
-		if &buftype == 'quickfix'
-			bnext
+		" list up buffers exclude special buffer
+		let bufs = filter(range(1, bufnr('$')), '
+				\ buflisted(v:val)
+				\ && "quickfix" !=? getbufvar(v:val, "&buftype")
+				\ && v:val != s:current_bufno
+				\ ')
+
+		" list up hidden buffers
+		let hidden_bufs = filter(copy(bufs),'len(getbufinfo(v:val)[0].windows) == 0')
+
+		if len(hidden_bufs)
+			execute 'buffer'.hidden_bufs[0]
 		endif
+		execute 'bdelete! '.s:current_bufno
 	endif
 endfunction
 
@@ -255,7 +267,7 @@ endfunction
 " buffer#start()
 "---------------------------------------------------
 function! buffer#start(mode) abort
-	let s:current_buffer_no = bufnr('%')
+	let s:current_bufno = bufnr('%')
 	if a:mode == "b"
 		let s:action_selected = function('s:action_selected_buffer')
 		let s:action_delete = function('s:action_delete_buffer')
