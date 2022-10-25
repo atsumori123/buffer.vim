@@ -238,28 +238,30 @@ function! s:buffer_close() abort
 		endif
 	endif
 
+	" list up buffers exclude special buffer
+	let bufs = filter(range(1, bufnr('$')), '
+			\ buflisted(v:val)
+			\ && getbufvar(v:val, "&buftype") == ""
+			\ && v:val != s:current_bufno
+			\ ')
+
 	" close buffer
 	if &buftype == 'quickfix'
 		" current window is QuickFix
-		cclose
+		execute printf("%s", len(bufs) ? "cclose" : "bdelete")
 	elseif &buftype != ''
 		" current window is special buffer
 		bdelete
 	else
-		" list up buffers exclude special buffer
-		let bufs = filter(range(1, bufnr('$')), '
-				\ buflisted(v:val)
-				\ && "quickfix" !=? getbufvar(v:val, "&buftype")
-				\ && v:val != s:current_bufno
-				\ ')
-
 		" list up hidden buffers
 		let hidden_bufs = filter(copy(bufs),'len(getbufinfo(v:val)[0].windows) == 0')
 
 		if len(hidden_bufs)
 			execute 'buffer'.hidden_bufs[0]
 		endif
-		execute 'bdelete! '.s:current_bufno
+		if buflisted(s:current_bufno)
+			execute 'bdelete! '.s:current_bufno
+		endif
 	endif
 endfunction
 
