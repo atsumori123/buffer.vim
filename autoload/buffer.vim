@@ -102,6 +102,21 @@ function! s:action_nop() abort
 endfunction
 
 "-------------------------------------------------------
+" action_xxxxx_handler()
+"-------------------------------------------------------
+function! s:action_selected_handler() abort
+	call s:action_selected(line('.'))
+endfunction
+
+function! s:action_delete_handler() abort
+	call s:action_delete(line('.'))
+endfunction
+
+function! s:action_add_handler() abort
+	call s:action_add()
+endfunction
+
+"-------------------------------------------------------
 " open_buffer()
 "-------------------------------------------------------
 function! s:open_buffer(list) abort
@@ -136,9 +151,9 @@ function! s:open_buffer(list) abort
 	set cpoptions&vim
 
 	" Create mappings to select and edit a file from the MRU list
-	nnoremap <buffer> <silent> <CR> :call <SID>action_selected(line('.'))<CR>
-	nnoremap <buffer> <silent> d :call <SID>action_delete(line('.'))<CR>
-	nnoremap <buffer> <silent> a :call <SID>action_add()<CR>
+	nnoremap <buffer> <silent> <CR> :call <SID>action_selected_handler()<CR>
+	nnoremap <buffer> <silent> d :call <SID>action_delete_handler()<CR>
+	nnoremap <buffer> <silent> a :call <SID>action_add_handler()<CR>
 	nnoremap <buffer> <silent> q :close<CR>
 
 	" Restore the previous cpoptions settings
