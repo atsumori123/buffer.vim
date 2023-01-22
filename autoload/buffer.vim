@@ -280,7 +280,7 @@ function s:action_selected(line) abort
 	if len(s:list) == 0 | return | endif
 	if s:mode == "b"
 		call s:action_selected_buffer(a:line)
-	elseif s:mode == "m" 
+	elseif s:mode == "m"
 		call s:action_selected_mark(a:line)
 	endif
 endfunction
@@ -292,7 +292,7 @@ function s:action_delete(line) abort
 	if len(s:list) == 0 | return | endif
 	if s:mode == "b"
 		call s:action_delete_buffer(a:line)
-	elseif s:mode == "m" 
+	elseif s:mode == "m"
 		call s:action_delete_mark(a:line)
 	endif
 endfunction
