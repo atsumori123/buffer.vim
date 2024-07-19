@@ -95,6 +95,13 @@ function! s:action_add_mark() abort
 endfunction
 
 "-------------------------------------------------------
+" action_nop()
+"-------------------------------------------------------
+function! s:action_nop() abort
+
+endfunction
+
+"-------------------------------------------------------
 " action_xxxxx_handler()
 "-------------------------------------------------------
 function! s:action_selected_handler() abort
@@ -177,13 +184,13 @@ function! s:open_buffer_list() abort
 		return
 	endif
 
-	let s:list = []
+	let list = []
 	for s in wk_list
 		let temp = split(s)
 		if temp[2] != "+"
 			call insert(temp, " ", 2)
 		endif
-		call add(s:list, printf("%4s %s %3s %s   %-16s  (%s)",
+		call add(list, printf("%4s %s %3s %s   %-16s  (%s)",
 	  		\ temp[0],
 	  		\ s:current_bufno == temp[0] ? "*" : " ",
 			\ temp[1],
@@ -192,7 +199,7 @@ function! s:open_buffer_list() abort
 	  		\ temp[3]))
 	endfor
 
-	call s:open_buffer(s:list)
+	call s:open_buffer(list)
 endfunction
 
 "-------------------------------------------------------
@@ -200,7 +207,7 @@ endfunction
 "-------------------------------------------------------
 function! s:open_mark_list() abort
 	" make marks menu
-	let s:list = []
+	let list = []
 	let s:used_keys = ""
 	let all_marks = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
 
@@ -214,12 +221,12 @@ function! s:open_mark_list() abort
 				\ bnr == cbnr ? "*" : " ",
 				\ line,
 				\ s:get_mark_text(key))
-			call add(s:list, temp)
+			call add(list, temp)
 			let s:used_keys .= key
 		endif
 	endfor
 
-	call s:open_buffer(s:list)
+	call s:open_buffer(list)
 endfunction
 
 "---------------------------------------------------
@@ -274,51 +281,26 @@ function! s:buffer_close() abort
 endfunction
 
 "---------------------------------------------------
-" action_selected
-"---------------------------------------------------
-function s:action_selected(line) abort
-	if len(s:list) == 0 | return | endif
-	if s:mode == "b"
-		call s:action_selected_buffer(a:line)
-	elseif s:mode == "m"
-		call s:action_selected_mark(a:line)
-	endif
-endfunction
-
-"---------------------------------------------------
-" action_delete
-"---------------------------------------------------
-function s:action_delete(line) abort
-	if len(s:list) == 0 | return | endif
-	if s:mode == "b"
-		call s:action_delete_buffer(a:line)
-	elseif s:mode == "m"
-		call s:action_delete_mark(a:line)
-	endif
-endfunction
-
-"---------------------------------------------------
-" action_add
-"---------------------------------------------------
-function s:action_add() abort
-	if s:mode == "m"
-		call s:action_add_mark()
-	endif
-endfunction
-
-"---------------------------------------------------
 " buffer#start()
 "---------------------------------------------------
 function! buffer#start(mode) abort
 	let s:current_bufno = bufnr('%')
-	let s:mode = a:mode
-	if s:mode == "b"
+	if a:mode == "b"
+		let s:action_selected = function('s:action_selected_buffer')
+		let s:action_delete = function('s:action_delete_buffer')
+		let s:action_add = function('s:action_nop')
 		call s:open_buffer_list()
 
 	elseif a:mode == "m"
+		let s:action_selected = function('s:action_selected_mark')
+		let s:action_delete = function('s:action_delete_mark')
+		let s:action_add = function('s:action_add_mark')
 		call s:open_mark_list()
 
 	elseif a:mode == "c"
+		let s:action_selected = function('s:action_nop')
+		let s:action_delete = function('s:action_nop')
+		let s:action_add = function('s:action_nop')
 		call s:buffer_close()
 	endif
 endfunction
