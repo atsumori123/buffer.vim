@@ -305,5 +305,83 @@ function! buffer#start(mode) abort
 	endif
 endfunction
 
+"---------------------------------------------------------------
+" buffer#bnext_bprev
+"---------------------------------------------------------------
+function! buffer#bnext_bprev(direction) abort
+	if &buftype == 'quickfix'
+		let qfnum = getqflist({'nr':'$'}).nr
+		let qfid = getqflist({'nr':0}).nr
+		if a:direction == 'bnext'
+			if qfid >= qfnum
+				echohl WarningMsg | echomsg 'qflist: top of stack' | echohl None
+				return
+			endif
+			silent cnewer
+		else
+			if qfid <= 1
+				echohl WarningMsg | echomsg 'qflist: bottom of stack' | echohl None
+				return
+			endif
+			silent colder
+		endif
+		echo "\r"
+		setlocal modifiable
+	else
+		if !empty(&buftype) | return | endif
+		execute a:direction
+		if &buftype == 'quickfix'
+			execute a:direction
+		endif
+	endif
+endfunction
+
+"---------------------------------------------------------------
+" buffer#display_in_center
+"---------------------------------------------------------------
+function! buffer#display_in_center() abort
+	let pos = getcurpos()
+	let x = pos[4]
+	let cx = &columns / 2 - 4
+
+	if x <= cx
+		return
+	else
+		let zl = x - cx
+		execute "normal! 0"
+		execute "normal! ".zl."zl"
+		call setpos(".", pos)
+		execute "normal! zz"
+	endif
+endfunction
+
+"---------------------------------------------------------------
+" buffer#replace
+"---------------------------------------------------------------
+function! buffer#replace(range) abort
+	if a:range
+		let temp = @@
+		silent normal gvy
+		let target_pattern = @@
+		let @@ = temp
+	else
+		let target_pattern = expand('<cword>')
+	endif
+
+	let esc_chars = '^$.*[]/~\'
+	let target_pattern = escape(target_pattern, esc_chars)
+	let replace_pattern = input(printf('"%s" --> ', target_pattern))
+	if empty(replace_pattern) | return | endif
+	let replace_pattern = escape(replace_pattern, esc_chars)
+	let start = input("Input replace start line (default:1) ? ")
+	if empty(start) | let start = 1 | endif
+
+	if a:range
+		exe start.",$s/".target_pattern."/".replace_pattern."/gc"
+	else
+		exe start.",$s/\\<".target_pattern."\\>/".replace_pattern."/gc"
+	endif
+endfunction
+
 let &cpoptions = s:save_cpo
 unlet s:save_cpo
