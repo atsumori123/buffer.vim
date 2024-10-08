@@ -1,6 +1,27 @@
 let s:save_cpo = &cpoptions
 set cpoptions&vim
 
+let s:buf_list = []
+let s:save_line = ""
+
+"-------------------------------------------------------
+" get_bufnr()
+"-------------------------------------------------------
+function! s:get_bufnr() abort
+	let list = split(execute(":ls"), "\n")
+	let bufs = []
+	for b in list
+		call add(bufs, split(b, ' ')[0])
+	endfor
+	return bufs
+endfunction
+
+function! s:open_preview_buf(cmd) abort
+	if (exists('*oldfiles#lock')) | call oldfiles#lock(1) | endif
+	execute a:cmd
+	if (exists('*oldfiles#lock')) | call oldfiles#lock(0) | endif
+endfunction
+
 "-------------------------------------------------------
 " get_mark_text()
 "-------------------------------------------------------
@@ -263,7 +284,7 @@ function! s:buffer_close() abort
 	" close buffer
 	if &buftype == 'quickfix'
 		" current window is QuickFix
-		execute printf("%s", len(bufs) ? "cclose" : "bdelete")
+		cclose
 	elseif &buftype != ''
 		" current window is special buffer
 		bdelete
@@ -275,6 +296,7 @@ function! s:buffer_close() abort
 			execute 'buffer'.hidden_bufs[0]
 		endif
 		if buflisted(s:current_bufno)
+			if !len(bufs) | cclose | endif
 			execute 'bdelete! '.s:current_bufno
 		endif
 	endif
@@ -352,6 +374,57 @@ function! buffer#display_in_center() abort
 		execute "normal! ".zl."zl"
 		call setpos(".", pos)
 		execute "normal! zz"
+	endif
+endfunction
+
+"---------------------------------------------------------------
+" Open preview
+"---------------------------------------------------------------
+function! buffer#open_preview() abort
+	if &buftype != 'quickfix'
+		return
+	endif
+
+	let line = getline('.')
+	if line == s:save_line
+		call buffer#close_preview()
+		return
+	endif
+
+	let s:save_line = line
+	let w = split(line, '|')
+	let cmd = "pedit +".split(w[1], ' ')[0].' '.w[0]
+
+	silent! wincmd P
+	if &previewwindow
+		" already exists prview window
+		let b = bufnr('%')
+		call s:open_preview_buf(cmd)
+		if b != bufnr('%') && match(s:buf_list, b) < 0
+			silent! execute 'bdelete! '.b
+		endif
+		silent! wincmd p
+	else
+		" open preview window
+		let s:buf_list = s:get_bufnr()
+		call s:open_preview_buf(cmd)
+	endif
+endfunction
+
+"---------------------------------------------------------------
+" Close preview
+"---------------------------------------------------------------
+function! buffer#close_preview() abort
+	silent! wincmd P
+	if &previewwindow
+		let b = bufnr('%')
+		wincmd p
+		silent! pclose
+		if match(s:buf_list, b) < 0
+			silent! execute 'bdelete! '.b
+		endif
+		let s:buf_list = []
+		let s:save_line = ""
 	endif
 endfunction
 
