@@ -20,9 +20,9 @@ endfunction
 " Open the preview buffer
 "-------------------------------------------------------
 function! s:open_preview(path, lnum) abort
-	if exists('g:lock_file_history') | let g:lock_file_history = 1 | endif
+	if exists('g:lock_oldfiles') | let g:lock_oldfiles = 1 | endif
 	execute "pedit +".a:lnum.' '.a:path
-	if exists('g:lock_file_history') | let g:lock_file_history = 0 | endif
+	if exists('g:lock_oldfiles') | let g:lock_oldfiles = 0 | endif
 endfunction
 
 "---------------------------------------------------------------
