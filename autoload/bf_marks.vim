@@ -43,6 +43,7 @@ endfunction
 function! s:selected_mark(pos) abort
 	let key = split(getline(a:pos))
 	silent! close
+	execute 'wincmd p'
 	execute "'".key[0]
 endfunction
 
